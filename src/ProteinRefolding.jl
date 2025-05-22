@@ -6,7 +6,7 @@ using .ProcessPDB
 using ColabMPNN, PyBoltz, PyBoltz.Schema, Combinatorics
 import BioStructures
 using BioStructures: MolecularStructure
-using ProteinChains: ProteinStructure, ProteinChain
+using ProteinChains: ProteinStructure, ProteinChain, readpdb
 using Combinatorics: Permutations, nthperm
 using TMscore: run_tmscore, tmscore
 
@@ -107,8 +107,19 @@ function predict_and_postprocess(preprocessed_pdbs::Vector{<:PreprocessedPDB}, m
     return (; tmresults, preprocessed_proteins, predicted_proteins)
 end
 
-function refold(proteinfiles::Vector{String}, temp_dir; warn_pdbformat=true, run_tmscore_func = complex_run_tmscore, devices=1, seqgen_kws...)
+# TODO Check that this works in all special cases, like missing gaps etc
+function insert_origseq!(molinput::MolecularInput, preprocessed_pdb::PreprocessedPDB)
+    prot = readpdb(preprocessed_pdb.pdb_filename)
+    for i in eachindex(prot.chains)
+        # TODO this assertion shouldn't be needed but I'm keeping it for now
+        @assert molinput["sequences"][i]["protein"]["id"] == prot.chains[i].id "$(molinput["sequences"][i]["protein"]["id"]) $(prot.chains[i].id)"
+        molinput["sequences"][i]["protein"]["sequence"] = prot.chains[i].sequence
+    end
+end
+
+function refold(proteinfiles::Vector{String}, temp_dir; reuse_queryseq=false, warn_pdbformat=true, run_tmscore_func = complex_run_tmscore, devices=1, seqgen_kws...)
     preprocessed_pdbs, molecularinput = preprocess_and_generate(proteinfiles, temp_dir; warn_pdbformat, seqgen_kws...)
+    reuse_queryseq && insert_origseq!.(molecularinput, preprocessed_pdbs)
     return predict_and_postprocess(preprocessed_pdbs, molecularinput; run_tmscore_func, devices)
 end
 refold(proteinfiles::Vector{String}; kws...) = mktempdir(temp_dir -> refold(proteinfiles, temp_dir; kws...))
