@@ -5,8 +5,8 @@
 ## Quick start
 
 ```julia
-using Pkg;
-Pkg.add(PackageSpec(url="https://github.com/MurrellGroup/ProteinRefolding.jl"))
+using Pkg
+Pkg.add(url="https://github.com/MurrellGroup/ProteinRefolding.jl")
 
 using ProteinRefolding
 
