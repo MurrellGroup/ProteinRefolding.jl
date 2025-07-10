@@ -10,6 +10,7 @@ ColabMPNN = "434c8270-3839-45f3-8f5c-492a580b2514"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 ProteinChains = "b8e8f2a5-48d3-44f1-ba0d-c71cb7726ff8"
 PyBoltz = "0bca4874-a2b8-4dca-bc03-d2d86e344f1f"
+PyProteinMPNN = "ba507b30-8e11-4219-9ced-db99387ea03d"
 TMscore = "6e960f36-814a-4ceb-8c87-6ab5da0e9bff"
 
 [compat]
@@ -18,7 +19,8 @@ BioStructures = "4.5.0"
 ColabMPNN = "0.0.3"
 Combinatorics = "1.0.3"
 ProteinChains = "0.7.3"
-PyBoltz = "0.1.1"
+PyBoltz = "0.2.0"
+PyProteinMPNN = "1.0.3"
 TMscore = "0.1.0"
 julia = "1.6.7"
 

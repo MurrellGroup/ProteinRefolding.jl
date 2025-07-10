@@ -3,7 +3,9 @@ module ProteinRefolding
 include("Process.jl")
 using .ProcessPDB
 
-using ColabMPNN, PyBoltz, PyBoltz.Schema, Combinatorics
+import PyProteinMPNN
+using ColabMPNN
+using PyBoltz, PyBoltz.Schema
 import BioStructures
 using BioStructures: MolecularStructure
 using ProteinChains: ProteinStructure, ProteinChain, readpdb
@@ -19,10 +21,24 @@ TODO
 - Allow usage of custom sequence
 =#
 
-torch = PyBoltz.PythonCall.pyimport("torch")
-torch.torch.set_float32_matmul_precision("high")
+function pyproteinmpnn_generate_seqs(
+    pdb_filename::AbstractString, chainids=BioStructures.chainids(readfile(pdb_filename));
+    msa_size=1,
+    query_temperature=0.1,
+    extra_temperature=0.1,
+    ca_only=false
+)
+    query_seq_vector = only(values(PyProteinMPNN.run_protein_mpnn(pdb_filename; num_seq_per_target=1, sampling_temp=query_temperature, ca_only)))
+    query_seq = only(query_seq_vector)
+    if isone(msa_size)
+        extra_seqs = String[]
+    else
+        extra_seqs = only(values(PyProteinMPNN.run_protein_mpnn(pdb_filename; num_seq_per_target=msa_size-1, sampling_temp=extra_temperature, ca_only)))
+    end
+    return query_seq, extra_seqs
+end
 
-function mpnn_generate_seqs(
+function colabmpnn_generate_seqs(
     pdb_filename::AbstractString, chainids=BioStructures.chainids(readfile(pdb_filename));
     msa_size=1,
     query_temperature=0.1,
@@ -88,7 +104,8 @@ complex_run_tmscore(A, B; kws...) = complex_run_tmscore!(deepcopy(A), B; kws...)
 
 function preprocess_and_generate(proteinfiles::Vector{String}, temp_dir; warn_pdbformat=true, seqgen_kws...)
     preprocessed_pdbs = preprocess.(proteinfiles, joinpath(temp_dir, "preprocessed_pdbs"))
-    seqs = mpnn_generate_seqs.(getproperty.(preprocessed_pdbs, :pdb_filename); seqgen_kws...)
+    seqs = pyproteinmpnn_generate_seqs.(getproperty.(preprocessed_pdbs, :pdb_filename); seqgen_kws...)
+    #seqs = colabmpnn_generate_seqs.(getproperty.(preprocessed_pdbs, :pdb_filename); seqgen_kws...)
     molecularinput = make_molecularinput.(first.(seqs), last.(seqs), preprocessed_pdbs)
     fillgaps!.(molecularinput, preprocessed_pdbs; warn_pdbformat)
     return preprocessed_pdbs, molecularinput
