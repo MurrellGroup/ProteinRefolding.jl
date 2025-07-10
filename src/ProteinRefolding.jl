@@ -102,10 +102,9 @@ function complex_run_tmscore!(A::ProteinStructure, B::ProteinStructure; max_seco
 end
 complex_run_tmscore(A, B; kws...) = complex_run_tmscore!(deepcopy(A), B; kws...)
 
-function preprocess_and_generate(proteinfiles::Vector{String}, temp_dir; warn_pdbformat=true, seqgen_kws...)
+function preprocess_and_generate(proteinfiles::Vector{String}, temp_dir; generate_seqs=pyproteinmpnn_generate_seqs, warn_pdbformat=true, seqgen_kws...)
     preprocessed_pdbs = preprocess.(proteinfiles, joinpath(temp_dir, "preprocessed_pdbs"))
-    seqs = pyproteinmpnn_generate_seqs.(getproperty.(preprocessed_pdbs, :pdb_filename); seqgen_kws...)
-    #seqs = colabmpnn_generate_seqs.(getproperty.(preprocessed_pdbs, :pdb_filename); seqgen_kws...)
+    seqs = generate_seqs.(getproperty.(preprocessed_pdbs, :pdb_filename); seqgen_kws...)
     molecularinput = make_molecularinput.(first.(seqs), last.(seqs), preprocessed_pdbs)
     fillgaps!.(molecularinput, preprocessed_pdbs; warn_pdbformat)
     return preprocessed_pdbs, molecularinput
