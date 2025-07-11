@@ -9,7 +9,7 @@ using PyBoltz, PyBoltz.Schema
 import BioStructures
 using BioStructures: MolecularStructure
 using ProteinChains: ProteinStructure, ProteinChain, readpdb
-using Combinatorics: Permutations, nthperm
+using Combinatorics: permutations, nthperm
 using TMscore: run_tmscore, tmscore
 
 export refold
@@ -119,8 +119,7 @@ function predict_and_postprocess(preprocessed_pdbs::Vector{<:PreprocessedPDB}, m
     resetchainids!.(predicted_proteins, preprocessed_pdbs)
     preprocessed_proteins = resetprocessedpdb.(preprocessed_pdbs)
 
-    tmresults = run_tmscore_func.(preprocessed_proteins, predicted_proteins)
-    return (; tmresults, preprocessed_proteins, predicted_proteins)
+    return (; preprocessed_proteins, predicted_proteins)
 end
 
 # TODO Check that this works in all special cases, like missing gaps etc
